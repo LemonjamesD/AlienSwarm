@@ -14,7 +14,9 @@ impl Game {
     pub async fn game_loop(&mut self) -> Result<()> {
         tokio::spawn(async move { loop {
             // TODO: Add Logic and Stuff
-        }})
+        }});
+
+        Ok(())
     }
 }
 
