@@ -27,3 +27,22 @@ impl<H: HealthComponentTrait<H>> HealthComponent<H> {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::systems::health_component::HealthComponent;
+    
+    #[test]
+    fn health_add_test() {
+        let mut health = HealthComponent::new(50, 100);
+        health.add(50);
+        assert_eq!(100, health.current_health);
+    }
+
+    #[test]
+    fn health_sub_test() {
+        let mut health = HealthComponent::new(100, 100);
+        health.sub(50);
+        assert_eq!(50, health.current_health);
+    }
+}
