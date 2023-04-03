@@ -1,4 +1,4 @@
-struct DirtBlock {
+pub struct DirtBlock {
     
 }
 
