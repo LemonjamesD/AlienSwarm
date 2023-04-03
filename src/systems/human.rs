@@ -1,5 +1,6 @@
 use super::health_component::HealthComponent;
 
+/// Human Character for the player to control.
 pub struct Human {
     health: HealthComponent<u16>
 }
