@@ -1,4 +1,4 @@
-struct AirBlock {
+pub struct AirBlock {
     
 }
 

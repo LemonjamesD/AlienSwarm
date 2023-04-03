@@ -1,4 +1,4 @@
-mod blocks;
+pub mod blocks;
 
-mod health_component;
-mod human;
+pub mod health_component;
+pub mod human;

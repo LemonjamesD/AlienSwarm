@@ -1,2 +1,2 @@
-mod dirt;
-mod air;
+pub mod dirt;
+pub mod air;
