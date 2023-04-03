@@ -1,12 +1,13 @@
 use std::ops::{Add, Sub};
 use std::cmp::{Ord, min, max};
 
-
+/// HealthComponent struct to make working with health easier.
 pub struct HealthComponent<H> {
     pub current_health: H,
     pub max_health: H
 }
 
+/// A Trait used for the Generics in HealthComponent.
 pub trait HealthComponentTrait<H> = Add<Output = H> + Sub<Output = H> + Ord + Default + Copy;
 
 impl<H: HealthComponentTrait<H>> HealthComponent<H> {
@@ -17,11 +18,13 @@ impl<H: HealthComponentTrait<H>> HealthComponent<H> {
         }
     }
 
+    /// Adds Health.
     pub fn add(&mut self, rhs: H) -> &mut Self {
         self.current_health = max(H::default(), min(self.max_health, self.current_health + rhs));
         self
     }
 
+    /// Remove Health.
     pub fn sub(&mut self, rhs: H) -> &mut Self {
         self.current_health = max(H::default(), min(self.max_health, self.current_health - rhs));
         self
