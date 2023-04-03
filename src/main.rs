@@ -16,9 +16,9 @@ use game::Game;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    execute!(stdout(), Clear(ClearType::All), Print("Hello"),)?;
+    let mut game = Game::new()?;
 
-    let game = Game::new();
+    game.game_loop().await?;
 
     Ok(())
 }
