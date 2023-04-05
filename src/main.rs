@@ -3,16 +3,9 @@
 pub mod systems;
 pub mod game;
 
-use std::io::stdout;
-
-use crossterm::{
-    execute,
-    style::Print,
-    terminal::{Clear, ClearType},
-    Result,
-};
-
 use game::Game;
+
+use crossterm::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -9,5 +9,6 @@ use crate::systems::human::Human;
 pub enum Thing {
     Human(Human),
     Dirt(DirtBlock),
-    Air(AirBlock)
+    Air(AirBlock),
+    Newline
 }
