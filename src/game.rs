@@ -4,14 +4,20 @@ use crate::systems::Thing;
 
 use std::io::stdout;
 use std::time::Duration;
+use std::io::Write;
+use std::process::exit;
+use std::sync::Arc;
 
 use crossterm::{
-    terminal::{disable_raw_mode, enable_raw_mode},
-    execute,
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    execute, queue,
     style::Print,
     terminal::{Clear, ClearType},
     Result,
-    cursor::MoveTo,
+    cursor::{Hide, Show, MoveTo},
+    event::read,
+    event::Event,
+    event::KeyCode::Char
 };
 
 use tokio::time::{Instant, sleep};
@@ -68,6 +74,7 @@ impl Game {
                     vec.push(Thing::Newline);
                 }
                 vec.pop();
+                vec.pop();
                 vec.push(Thing::Human(Human::new()));
                 return vec;
             })(AirBlock::new()),
@@ -92,11 +99,38 @@ impl Game {
         let mut instant = Instant::now();
         let mut fps = 0;
         let mut fps_display = 0;
-        execute!(stdout(), Clear(ClearType::All))?;
+        let mut stdout = Arc::new(stdout());
+        execute!(stdout, EnterAlternateScreen, Hide)?;
+        execute!(stdout, Clear(ClearType::FromCursorDown))?;
+        let stdout_a = stdout.clone();
         tokio::spawn(async move { loop {
+            match read().unwrap() {
+                Event::Key(event) => match event.code {
+                    Char(c) => match c {
+                        'q' => {
+                            execute!(stdout_a, LeaveAlternateScreen, Show).unwrap();
+                            disable_raw_mode().unwrap();
+                        },
+                        _ => ()
+                    }
+                    _ => ()
+                },
+                _ => ()
+            }
+        }});
+        let stdout_b = stdout.clone()
+        loop {
             let mut frame = spaces.clone();
+            for (i, tile) in (&tiles[2]).iter().enumerate() {
+                let _ = match tile {
+                    Thing::Human(_) => str_idx!(frame, i, "☺"),
+                    Thing::Dirt(_) => str_idx!(frame, i, "D"),
+                    Thing::Air(_) => (),
+                    Thing::Newline => str_idx!(frame, i, "\n"),
+                    _ => ()
+                };
+            }
             for (i, tile) in (&tiles[1]).iter().enumerate() {
-                // println!("{i}");
                 let _ = match tile {
                     Thing::Human(_) => str_idx!(frame, i, "☺"),
                     Thing::Dirt(_) => str_idx!(frame, i, "D"),
@@ -112,8 +146,9 @@ impl Game {
             } else {
                 fps += 1;
             }
-            execute!(stdout(), MoveTo(0,0), Print(format!("{fps_display} fps\n")), Print(frame.clone()));
-        }});
+            queue!(stdout_b, MoveTo(0,0), Print(format!("{fps_display} fps\n")), Print(frame.clone()))?;
+            stdout.flush()?;
+        }
 
         Ok(())
     }
@@ -121,6 +156,7 @@ impl Game {
 
 impl Drop for Game {
     fn drop(&mut self) {
+        execute!(stdout(), LeaveAlternateScreen, Show).unwrap();
         disable_raw_mode().unwrap();
     }
 }
