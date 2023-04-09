@@ -132,7 +132,7 @@ impl Game {
                 let _ = match tile {
                     Thing::Human(_) => str_idx!(frame, i, "☺"),
                     Thing::Dirt(_) => str_idx!(frame, i, "D"),
-                    Thing::Air(_) => str_idx!(frame, i, " "),
+                    Thing::Air(_) => (),
                     Thing::Newline => str_idx!(frame, i, "\n"),
                     _ => ()
                 };
