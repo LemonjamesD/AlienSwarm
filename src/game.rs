@@ -9,18 +9,20 @@ use std::process::exit;
 use std::sync::Arc;
 
 use crossterm::{
+    ExecutableCommand,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
     execute, queue,
     style::Print,
     terminal::{Clear, ClearType},
     Result,
-    cursor::{Hide, Show, MoveTo},
+    cursor::{Hide, Show, MoveTo, MoveToColumn},
     event::read,
     event::Event,
     event::KeyCode::Char
 };
 
 use tokio::time::{Instant, sleep};
+use tokio::sync::Mutex;
 
 macro_rules! str_idx {
     ($name:expr, $i:expr, $expr:expr) => {
@@ -49,6 +51,7 @@ pub struct Game {}
 
 impl Game {
     pub fn new() -> Result<Game> {
+        execute!(stdout(), EnterAlternateScreen, Hide)?;
         enable_raw_mode()?;
         Ok(Game {})
     }
@@ -99,17 +102,20 @@ impl Game {
         let mut instant = Instant::now();
         let mut fps = 0;
         let mut fps_display = 0;
-        let mut stdout = Arc::new(stdout());
-        execute!(stdout, EnterAlternateScreen, Hide)?;
+        let mut stdout = stdout();
         execute!(stdout, Clear(ClearType::FromCursorDown))?;
+        let mut stdout = Arc::new(Mutex::new(stdout));
         let stdout_a = stdout.clone();
         tokio::spawn(async move { loop {
             match read().unwrap() {
                 Event::Key(event) => match event.code {
                     Char(c) => match c {
                         'q' => {
-                            execute!(stdout_a, LeaveAlternateScreen, Show).unwrap();
+                            let stdout_a_a = stdout_a.clone();
+                            let mut mutex_stdout = (stdout_a_a.lock()).await;
+                            mutex_stdout.execute(LeaveAlternateScreen).unwrap().execute(Show).unwrap();
                             disable_raw_mode().unwrap();
+                            exit(0);
                         },
                         _ => ()
                     }
@@ -118,15 +124,15 @@ impl Game {
                 _ => ()
             }
         }});
-        let stdout_b = stdout.clone()
-        loop {
+        let stdout_b = stdout.clone();
+        tokio::spawn(async move { loop {
             let mut frame = spaces.clone();
             for (i, tile) in (&tiles[2]).iter().enumerate() {
                 let _ = match tile {
                     Thing::Human(_) => str_idx!(frame, i, "☺"),
                     Thing::Dirt(_) => str_idx!(frame, i, "D"),
                     Thing::Air(_) => (),
-                    Thing::Newline => str_idx!(frame, i, "\n"),
+                    Thing::Newline => str_idx!(frame, i, "\r\n"),
                     _ => ()
                 };
             }
@@ -135,7 +141,7 @@ impl Game {
                     Thing::Human(_) => str_idx!(frame, i, "☺"),
                     Thing::Dirt(_) => str_idx!(frame, i, "D"),
                     Thing::Air(_) => (),
-                    Thing::Newline => str_idx!(frame, i, "\n"),
+                    Thing::Newline => str_idx!(frame, i, "\r\n"),
                     _ => ()
                 };
             }
@@ -146,9 +152,9 @@ impl Game {
             } else {
                 fps += 1;
             }
-            queue!(stdout_b, MoveTo(0,0), Print(format!("{fps_display} fps\n")), Print(frame.clone()))?;
-            stdout.flush()?;
-        }
+            queue!(*stdout_b.lock().await, MoveTo(0,0), Print(format!("{fps_display} fps\r\n")), Print(frame.clone())).unwrap();
+            (*stdout_b.lock().await).flush().unwrap();
+        }}).await;
 
         Ok(())
     }
