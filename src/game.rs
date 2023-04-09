@@ -23,6 +23,7 @@ use crossterm::{
 
 use tokio::time::{Instant, sleep};
 use tokio::sync::Mutex;
+use tracing::info;
 
 macro_rules! str_idx {
     ($name:expr, $i:expr, $expr:expr) => {
@@ -131,8 +132,8 @@ impl Game {
                 let _ = match tile {
                     Thing::Human(_) => str_idx!(frame, i, "☺"),
                     Thing::Dirt(_) => str_idx!(frame, i, "D"),
-                    Thing::Air(_) => (),
-                    Thing::Newline => str_idx!(frame, i, "\r\n"),
+                    Thing::Air(_) => str_idx!(frame, i, " "),
+                    Thing::Newline => str_idx!(frame, i, "\n"),
                     _ => ()
                 };
             }
@@ -141,10 +142,11 @@ impl Game {
                     Thing::Human(_) => str_idx!(frame, i, "☺"),
                     Thing::Dirt(_) => str_idx!(frame, i, "D"),
                     Thing::Air(_) => (),
-                    Thing::Newline => str_idx!(frame, i, "\r\n"),
+                    Thing::Newline => str_idx!(frame, i, "\n"),
                     _ => ()
                 };
             }
+            frame = frame.replace("\n", "\r\n");
             if instant.elapsed().as_secs() >= 1 {
                 fps_display = fps;
                 fps = 0;
@@ -154,6 +156,7 @@ impl Game {
             }
             queue!(*stdout_b.lock().await, MoveTo(0,0), Print(format!("{fps_display} fps\r\n")), Print(frame.clone())).unwrap();
             (*stdout_b.lock().await).flush().unwrap();
+            sleep(Duration::from_nanos(16666666)).await;
         }}).await;
 
         Ok(())
