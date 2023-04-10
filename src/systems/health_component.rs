@@ -2,6 +2,7 @@ use std::ops::{Add, Sub};
 use std::cmp::{Ord, min, max};
 
 /// HealthComponent struct to make working with health easier.
+#[derive(Clone)]
 pub struct HealthComponent<H> {
     pub current_health: H,
     pub max_health: H
